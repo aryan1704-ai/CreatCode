@@ -1,0 +1,272 @@
+/* =========================================================
+   CREATCODE — LOADING STATES & SKELETONS
+   Load AFTER style.css (and before/after mobile.css):
+   <link rel="stylesheet" href="css/loading.css">
+========================================================= */
+
+/* ---------- Skeleton base (shimmer) ---------- */
+
+.skeleton {
+    position: relative;
+    overflow: hidden;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.skeleton::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.07),
+        transparent
+    );
+    animation: skeletonShimmer 1.4s infinite;
+}
+
+@keyframes skeletonShimmer {
+    100% { transform: translateX(100%); }
+}
+
+.skeleton-line {
+    height: 11px;
+    margin-bottom: 10px;
+}
+
+.skeleton-line.short   { width: 70%; }
+.skeleton-line.shorter { width: 45%; }
+
+.skeleton-title {
+    width: 55%;
+    height: 18px;
+    margin-bottom: 16px;
+}
+
+.skeleton-block {
+    height: 90px;
+    margin: 14px 0;
+    border-radius: 8px;
+}
+
+
+/* ---------- Project list skeleton ---------- */
+
+.skeleton-project {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 7px;
+    margin-bottom: 3px;
+}
+
+.skeleton-box {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    border-radius: 7px;
+}
+
+.skeleton-lines {
+    flex: 1;
+    min-width: 0;
+}
+
+.skeleton-project .skeleton-line {
+    height: 9px;
+    margin-bottom: 7px;
+}
+
+.skeleton-project .skeleton-line:last-child {
+    margin-bottom: 0;
+}
+
+
+/* ---------- History skeleton ---------- */
+
+.skeleton-history {
+    height: 40px;
+    margin-bottom: 6px;
+    border-radius: 8px;
+}
+
+
+/* ---------- Analysis loading / error ---------- */
+
+.analysis-loading {
+    padding-top: 4px;
+}
+
+.analysis-loading-label {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 18px;
+    color: #8f96f3;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.analysis-error {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 30px 20px;
+    text-align: center;
+}
+
+.analysis-error svg {
+    width: 26px;
+    height: 26px;
+    margin-bottom: 12px;
+    color: #f87171;
+}
+
+.analysis-error h3 {
+    margin-bottom: 6px;
+    color: #e5e7eb;
+    font-size: 14px;
+}
+
+.analysis-error p {
+    max-width: 280px;
+    color: #8b93a7;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+
+/* ---------- Sidebar error + retry ---------- */
+
+.list-error {
+    padding: 14px 8px;
+    color: #8b93a7;
+    font-size: 12px;
+    line-height: 1.6;
+}
+
+.list-error button {
+    margin-top: 8px;
+    padding: 7px 14px;
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 7px;
+    background: rgba(99, 102, 241, 0.08);
+    color: #c4c7ff;
+    font-family: var(--font-main);
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.list-error button:hover {
+    background: rgba(99, 102, 241, 0.16);
+}
+
+
+/* ---------- Button spinners (automatic on :disabled) ---------- */
+
+.btn-spinner,
+.generate-button:disabled::before,
+.run-button:disabled::before,
+.action-button:disabled::before,
+#chatSendBtn:disabled::before {
+    content: "";
+    display: inline-block;
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spinnerRotate 0.7s linear infinite;
+}
+
+@keyframes spinnerRotate {
+    to { transform: rotate(360deg); }
+}
+
+.generate-button:disabled,
+.run-button:disabled,
+.action-button:disabled {
+    opacity: 0.8;
+    cursor: progress;
+    transform: none;
+    filter: none;
+}
+
+#chatSendBtn:disabled svg {
+    display: none;
+}
+
+
+/* ---------- Editor busy overlay (generate / convert) ---------- */
+
+.code-editor-wrapper.is-generating {
+    cursor: progress;
+}
+
+.code-editor-wrapper.is-generating::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    pointer-events: none;
+    background: linear-gradient(
+        100deg,
+        transparent 30%,
+        rgba(99, 102, 241, 0.09) 50%,
+        transparent 70%
+    );
+    background-size: 200% 100%;
+    animation: editorSweep 1.5s linear infinite;
+}
+
+.code-editor-wrapper.is-generating::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 6;
+    width: 35%;
+    height: 2px;
+    background: var(--accent-light);
+    animation: editorBar 1.2s ease-in-out infinite;
+}
+
+@keyframes editorSweep {
+    from { background-position: 200% 0; }
+    to   { background-position: -200% 0; }
+}
+
+@keyframes editorBar {
+    0%   { transform: translateX(-100%); }
+    100% { transform: translateX(300%); }
+}
+
+
+/* ---------- Terminal status while running ---------- */
+
+.terminal-status.is-busy {
+    color: #fbbf24;
+}
+
+
+/* ---------- Respect "reduce motion" ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .skeleton::after,
+    .code-editor-wrapper.is-generating::after,
+    .code-editor-wrapper.is-generating::before {
+        animation: none;
+    }
+
+    .btn-spinner,
+    .generate-button:disabled::before,
+    .run-button:disabled::before,
+    .action-button:disabled::before,
+    #chatSendBtn:disabled::before {
+        animation-duration: 2s;
+    }
+}

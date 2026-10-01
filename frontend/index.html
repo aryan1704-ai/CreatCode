@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="icon" href="data:,">
+    <title>CreatCode — AI Code Generator</title>
+    <link rel="icon" type="image/png" href="assets/CreatCode_logo.png">
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <link
+        href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+        rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Prism -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/mobile.css">
+    <link rel="stylesheet" href="css/loading.css">
+    <link rel="stylesheet" href="css/a11y.css">
+</head>
+
+<body>
+
+    <div class="app-shell">
+
+        <!-- =====================================================
+         TOP BAR
+     ====================================================== -->
+        <header class="topbar">
+
+            <div class="brand-section">
+
+                <div class="brand-icon">
+                    <i data-lucide="code-2"></i>
+                </div>
+
+                <div class="brand-name">
+                    CreatCode
+                </div>
+
+                <div class="workspace-selector">
+                    <span>My Workspace</span>
+                    <i data-lucide="chevron-down"></i>
+                </div>
+
+            </div>
+
+            <div class="topbar-status">
+                <span class="status-dot"></span>
+                AI Ready
+            </div>
+
+            <div class="topbar-actions">
+
+                <button class="icon-button" id="themeToggle" title="Toggle theme">
+                    <i data-lucide="sun"></i>
+                </button>
+
+                <button class="icon-button" title="Settings">
+                    <i data-lucide="settings"></i>
+                </button>
+
+                <div class="avatar">
+                    A
+                </div>
+
+            </div>
+
+        </header>
+
+
+        <!-- =====================================================
+         MAIN APPLICATION
+         ====================================================== -->
+        <div class="workspace-layout" data-mobile-panel="code">
+
+
+            <!-- =================================================
+             LEFT SIDEBAR
+         ================================================== -->
+            <aside class="sidebar">
+
+                <button class="new-project-button">
+                    <i data-lucide="plus"></i>
+                    <span>New Project</span>
+                </button>
+
+
+                <div class="search-box">
+
+                    <i data-lucide="search"></i>
+
+                    <input type="text" placeholder="Search projects" id="projectSearch">
+
+                    <span class="search-shortcut">/</span>
+
+                </div>
+
+
+                <!-- Workspace Navigation -->
+                <div class="sidebar-section">
+
+                    <div class="sidebar-heading">
+                        WORKSPACE
+                    </div>
+
+                    <button class="sidebar-item active">
+
+                        <i data-lucide="code-2"></i>
+
+                        <span>Code Studio</span>
+
+                    </button>
+
+
+                    <button class="sidebar-item">
+
+                        <i data-lucide="folder"></i>
+
+                        <span>Projects</span>
+
+                        <span class="sidebar-count">
+                            3
+                        </span>
+
+                    </button>
+
+
+                    <button class="sidebar-item">
+
+                        <i data-lucide="history"></i>
+
+                        <span>History</span>
+
+                    </button>
+
+                </div>
+
+
+                <!-- Tools -->
+                <div class="sidebar-section">
+
+                    <div class="sidebar-heading">
+                        TOOLS
+                    </div>
+
+
+                    <button class="sidebar-item">
+
+                        <i data-lucide="sparkles"></i>
+
+                        <span>AI Prompt Builder</span>
+
+                    </button>
+
+
+                    <button class="sidebar-item">
+
+                        <i data-lucide="shield-check"></i>
+
+                        <span>Security</span>
+
+                    </button>
+
+                </div>
+
+
+                <!-- Recent Projects -->
+                <div class="sidebar-section recent-section">
+
+                    <div class="sidebar-heading">
+                        RECENT PROJECTS
+                    </div>
+
+
+                    <div class="recent-project">
+
+                        <div class="project-language python">
+                            Py
+                        </div>
+
+                        <div class="recent-project-info">
+
+                            <div class="recent-project-name">
+                                Python Algorithms
+                            </div>
+
+                            <div class="recent-project-time">
+                                2 min ago
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="recent-project">
+
+                        <div class="project-language javascript">
+                            JS
+                        </div>
+
+                        <div class="recent-project-info">
+
+                            <div class="recent-project-name">
+                                Web Calculator
+                            </div>
+
+                            <div class="recent-project-time">
+                                Yesterday
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="recent-project">
+
+                        <div class="project-language java">
+                            J
+                        </div>
+
+                        <div class="recent-project-info">
+
+                            <div class="recent-project-name">
+                                Student Manager
+                            </div>
+
+                            <div class="recent-project-time">
+                                3 days ago
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+                <div class="history-section">
+                    <div class="sidebar-heading">GENERATION HISTORY</div>
+                    <div id="historyList"></div>
+                </div>
+
+            </aside>
+
+
+            <!-- =================================================
+             CENTER WORKSPACE
+         ================================================== -->
+            <main class="main-workspace">
+
+
+                <!-- Prompt Header -->
+                <section class="workspace-header">
+
+                    <div>
+
+                        <div class="eyebrow">
+                            AI CODE GENERATOR
+                        </div>
+
+                        <h1>
+                            What do you want to build?
+                        </h1>
+
+                    </div>
+
+
+                    <div class="language-badge" id="languageBadge">
+                        Language: Auto
+                    </div>
+
+                </section>
+
+
+                <!-- Prompt Card -->
+                <section class="prompt-card">
+
+                    <div class="prompt-editor-header">
+                        <div class="prompt-title">
+                            <i data-lucide="sparkles"></i>
+                            <span>Build with AI</span>
+                        </div>
+
+                        <span class="prompt-hint">
+                            Describe your idea
+                        </span>
+                    </div>
+
+                    <textarea id="promptInput" class="prompt-input"
+                        placeholder="Example: Create a Python program to find the largest number in an array.">Create a Python program to find the largest number in an array.</textarea>
+
+                    <div class="prompt-footer">
+
+                        <div class="prompt-helper">
+
+                            <i data-lucide="sparkles"></i>
+
+                            <span>AI-powered generation</span>
+
+                            <span class="shortcut-text">
+                                Ctrl + Enter
+                            </span>
+
+                        </div>
+
+                        <button class="generate-button" id="generateBtn">
+                            <i data-lucide="wand-sparkles"></i>
+                            <span>Generate</span>
+                        </button>
+
+                    </div>
+
+                </section>
+
+                <!-- Action Ribbon -->
+                <div class="action-ribbon">
+
+                    <button class="action-button" data-action="explain">
+                        <i data-lucide="book-open"></i>
+                        Explain
+                    </button>
+
+
+                    <button class="action-button" data-action="debug">
+                        <i data-lucide="bug"></i>
+                        Debug
+                    </button>
+
+
+                    <button class="action-button" data-action="optimize">
+                        <i data-lucide="gauge"></i>
+                        Optimize
+                    </button>
+
+
+                    <button class="action-button" data-action="testcases">
+                        <i data-lucide="flask-conical"></i>
+                        Test Cases
+                    </button>
+
+
+                    <button class="action-button" data-action="complexity">
+                        <i data-lucide="chart-no-axes-combined"></i>
+                        Complexity
+                    </button>
+
+
+                    <button class="action-button" data-action="security">
+                        <i data-lucide="shield"></i>
+                        Security
+                    </button>
+
+
+                    <button class="action-button" data-action="convert">
+                        <i data-lucide="repeat-2"></i>
+                        Convert
+                    </button>
+
+                </div>
+
+
+                <!-- Code Studio -->
+                <section class="code-studio">
+
+
+                    <div class="code-toolbar">
+
+                        <div class="file-info">
+
+                            <i data-lucide="file-code-2"></i>
+
+                            <span id="fileName">
+                                main.py
+                            </span>
+
+                        </div>
+
+
+                        <div class="code-toolbar-actions">
+
+                            <button class="run-button" id="runBtn">
+                                <i data-lucide="play"></i>
+                                Run
+                            </button>
+
+
+                            <button class="toolbar-icon-button" id="copyBtn" title="Copy code">
+                                <i data-lucide="copy"></i>
+                            </button>
+
+
+                            <button class="toolbar-icon-button" id="downloadBtn" title="Download code">
+                                <i data-lucide="download"></i>
+                            </button>
+
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Editor -->
+                    <div class="code-editor-wrapper">
+
+                        <div id="lineNumbers" class="line-numbers"></div>
+
+
+                        <pre id="syntaxHighlight" class="syntax-highlight" aria-hidden="true"></pre>
+
+
+                        <textarea id="codeEditor" aria-label="Code editor" aria-describedby="editorStatus"
+                            spellcheck="false"></textarea>
+
+                    </div>
+
+
+                    <!-- Editor Status -->
+                    <div class="editor-statusbar">
+
+                        <span id="cursorPosition">
+                            Ln 1, Col 1
+                        </span>
+
+                        <span>
+                            Spaces: 4
+                        </span>
+
+                        <span>
+                            UTF-8
+                        </span>
+
+                        <span>
+                            LF
+                        </span>
+
+                    </div>
+
+                </section>
+
+
+                <!-- Terminal -->
+                <section class="terminal-panel">
+
+                    <div class="terminal-header">
+
+                        <div class="terminal-title">
+
+                            <i data-lucide="terminal"></i>
+
+                            Terminal
+
+                        </div>
+
+                        <span class="terminal-status">
+                            Ready
+                        </span>
+
+                    </div>
+
+
+                    <div id="terminalOutput" class="terminal-output">
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">$</span>
+                            <span>CreatCode terminal ready.</span>
+                        </div>
+                    </div>
+
+                </section>
+
+            </main>
+
+
+            <!-- =================================================
+             RIGHT AI INSPECTOR
+         ================================================== -->
+            <aside class="inspector-panel">
+
+
+                <!-- Inspector Header -->
+                <div class="inspector-header">
+
+                    <div>
+
+                        <div class="eyebrow">
+                            AI INSPECTOR
+                        </div>
+
+                        <h2>
+                            Assistant
+                        </h2>
+
+                    </div>
+
+
+                    <button class="icon-button inspector-settings" title="Inspector settings">
+                        <i data-lucide="sliders-horizontal"></i>
+                    </button>
+
+                </div>
+
+
+                <!-- Tabs -->
+                <div class="inspector-tabs">
+
+                    <button class="inspector-tab active" data-tab="analysis">
+
+                        <i data-lucide="scan-search"></i>
+
+                        Analysis
+
+                    </button>
+
+
+                    <button class="inspector-tab" data-tab="chat">
+
+                        <i data-lucide="message-square"></i>
+
+                        Chat
+
+                    </button>
+
+                </div>
+
+
+                <!-- =================================================
+                 SCROLLABLE INSPECTOR BODY
+            ================================================== -->
+                <div class="inspector-body">
+
+
+                    <!-- Analysis Tab -->
+                    <div id="analysisTab" class="inspector-tab-content active">
+
+                        <div class="assistant-brand">
+
+                            <div>
+
+                                <div class="assistant-label">
+                                    CREATCODE AI
+                                </div>
+
+                            </div>
+
+
+                            <span class="ready-badge">
+                                <span></span>
+                                Ready
+                            </span>
+
+                        </div>
+
+
+                        <div class="analysis-title-row">
+
+                            <h3>
+                                Optimization Analysis
+                            </h3>
+
+                        </div>
+
+
+                        <div id="analysisContent" class="analysis-content">
+
+                            <div class="analysis-empty">
+
+                                <i data-lucide="sparkles"></i>
+
+                                <h3>
+                                    AI Analysis
+                                </h3>
+
+                                <p>
+                                    Generate or analyze code to see
+                                    detailed AI insights here.
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- Chat Tab -->
+                    <div id="chatTab" class="inspector-tab-content">
+
+                        <div class="chat-header">
+
+                            <div>
+
+                                <div class="assistant-label">
+                                    CREATCODE AI
+                                </div>
+
+                                <h3>
+                                    Code Assistant
+                                </h3>
+
+                            </div>
+
+                            <span class="ready-badge">
+                                <span></span>
+                                Ready
+                            </span>
+
+                        </div>
+
+
+                        <div id="chatMessages" class="chat-messages">
+
+                            <div class="chat-message assistant">
+
+                                <div class="chat-avatar">
+                                    AI
+                                </div>
+
+                                <div class="chat-bubble">
+
+                                    Hi! I can help you understand,
+                                    debug, optimize, or improve your code.
+
+                                </div>
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="chat-input-area">
+
+                            <textarea id="chatInput" placeholder="Ask about your code..." rows="3"></textarea>
+
+
+                            <button id="chatSendBtn" class="chat-send-button">
+
+                                <i data-lucide="send"></i>
+
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </aside>
+
+        </div>
+        <nav class="mobile-nav" aria-label="Main navigation">
+            <button class="mobile-nav-item" data-panel="projects">
+                <i data-lucide="folder"></i><span>Projects</span>
+            </button>
+            <button class="mobile-nav-item active" data-panel="code">
+                <i data-lucide="code-2"></i><span>Code</span>
+            </button>
+            <button class="mobile-nav-item" data-panel="analysis">
+                <i data-lucide="scan-search"></i><span>Analysis</span>
+            </button>
+            <button class="mobile-nav-item" data-panel="chat">
+                <i data-lucide="message-square"></i><span>Chat</span>
+            </button>
+        </nav>
+
+    </div>
+
+
+    <!-- =====================================================
+     PROMPT MODAL
+====================================================== -->
+    <div id="promptModal" class="modal-overlay">
+
+        <div class="modal-card">
+
+            <div class="modal-header">
+
+                <div>
+
+                    <div class="eyebrow">
+                        AI PROMPT BUILDER
+                    </div>
+
+                    <h2>
+                        Generated Prompt
+                    </h2>
+
+                </div>
+
+
+                <button id="closePromptModal" class="icon-button">
+                    <i data-lucide="x"></i>
+                </button>
+
+            </div>
+
+
+            <div class="modal-content">
+
+                <textarea id="generatedPrompt" readonly></textarea>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button id="copyPromptBtn" class="generate-button">
+
+                    <i data-lucide="copy"></i>
+
+                    Copy Prompt
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+
+    <!-- Prism -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-cpp.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-markup.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+
+
+    <!-- Application JS -->
+        <script src="js/app.js"></script>
+    </body>
+
+</html>

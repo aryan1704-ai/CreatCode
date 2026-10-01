@@ -57,21 +57,6 @@ Previously generated code is stored and can be loaded again.
 - Responsive interface
 - Keyboard shortcuts
 - Accessibility-focused UI
-
----
-
-## 🖥️ Screenshots
-
-Add screenshots of the application here.
-
-Example:
-
-```text
-screenshots/
-├── dashboard.png
-├── code-generation.png
-├── ai-chat.png
-└── mobile.png
 ```
 
 ---

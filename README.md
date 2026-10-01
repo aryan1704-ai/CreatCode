@@ -59,6 +59,7 @@ Previously generated code is stored and can be loaded again.
 - Accessibility-focused UI
 ```
 
+
 ---
 
 ## 🏗️ System Architecture

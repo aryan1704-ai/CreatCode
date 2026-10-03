@@ -1,255 +1,206 @@
 /* =========================================================
-   CREATCODE — UI CONSISTENCY & ACCESSIBILITY
-   Load order: style.css -> loading.css -> a11y.css -> mobile.css
-========================================================= */
+   CreatCode: Accessibility
+   Load AFTER style.css
+   ========================================================= */
 
-:root {
-    /* Old muted grey (#626979) was ~3.6:1 contrast. This is ~6:1 (WCAG AA) */
-    --text-muted: #8a92a6;
-    --focus-ring: #a5b4fc;
-}
-
-[hidden] {
-    display: none !important;
-}
-
-
-/* ---------- Skip link ---------- */
-
-.skip-link {
-    position: absolute;
-    top: -64px;
-    left: 12px;
-    z-index: 300;
-    padding: 10px 16px;
-    border-radius: 8px;
-    background: #ffffff;
-    color: #000000;
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-}
-
-.skip-link:focus {
-    top: 10px;
-}
-
-
-/* ---------- Visible keyboard focus everywhere ---------- */
+/* ---------- Focus visibility (keyboard users) ---------- */
+:focus { outline: none; }
 
 :focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 2px;
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* Fields whose wrapper shows the focus ring instead */
-.prompt-input:focus-visible,
-#codeEditor:focus-visible,
-.search-box input:focus-visible {
-    outline: none;
+/* On dark surfaces, use a white ring so it stays visible */
+.topbar :focus-visible,
+.editor :focus-visible,
+.terminal :focus-visible,
+.nav-item.active:focus-visible {
+  outline-color: #FFFFFF;
 }
 
-.search-box:focus-within {
-    border-color: rgba(165, 180, 252, 0.6);
-    box-shadow: 0 0 0 2px rgba(165, 180, 252, 0.25);
+button:focus-visible,
+.btn:focus-visible,
+.tab:focus-visible,
+.nav-item:focus-visible,
+.project-item:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--ink);
 }
 
-.code-editor-wrapper:focus-within {
-    box-shadow: inset 0 0 0 1px rgba(165, 180, 252, 0.55);
+textarea:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 3px solid var(--yellow);
+  outline-offset: 1px;
 }
 
-.chat-input-area textarea:focus-visible {
-    outline: 2px solid var(--focus-ring);
-    outline-offset: 1px;
+/* ---------- Skip link (jump past the sidebar) ---------- */
+.skip-link {
+  position: absolute;
+  top: -48px;
+  left: 12px;
+  z-index: 9999;
+  padding: 10px 16px;
+  background: var(--yellow);
+  color: var(--ink);
+  font-weight: 700;
+  border-radius: 0 0 8px 8px;
+  transition: top 0.15s;
 }
-
-
-/* ---------- Selected project (replaces inline styles) ---------- */
-
-.recent-project.is-selected {
-    background: rgba(99, 102, 241, 0.08);
-    box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.22);
-}
-
-
-/* ---------- Readable contrast for muted text ---------- */
-
-.sidebar-heading,
-.recent-project-time,
-.history-time,
-.history-empty,
-.prompt-hint,
-.prompt-helper,
-.shortcut-text,
-.editor-statusbar,
-.terminal-status,
-.search-shortcut,
-.sidebar-count,
-.analysis-empty p,
-.list-error,
-.project-delete-button {
-    color: var(--text-muted);
-}
-
-.prompt-input::placeholder,
-.search-box input::placeholder,
-.chat-input-area textarea::placeholder {
-    color: var(--text-muted);
-    opacity: 1;
-}
-
-
-/* ---------- Minimum readable font sizes ---------- */
-
-.sidebar-heading,
-.eyebrow,
-.assistant-label,
-.ready-badge,
-.prompt-hint,
-.shortcut-text,
-.prompt-helper,
-.editor-statusbar,
-.terminal-status,
-.recent-project-time,
-.history-time,
-.search-shortcut {
-    font-size: 11px;
-}
-
-.recent-project-name,
-.history-prompt,
-.action-button,
-.inspector-tab,
-.terminal-output,
-.analysis-empty p {
-    font-size: 12px;
-}
-
-.chat-bubble,
-.chat-input-area textarea,
-.analysis-content {
-    font-size: 13px;
-}
-
-
-/* ---------- Scrollable regions are keyboard-focusable ---------- */
-
-.terminal-output:focus-visible,
-.inspector-body:focus-visible,
-.main-workspace:focus-visible {
-    outline-offset: -2px;
-}
-
-.main-workspace:focus {
-    outline: none; /* skip-link target only */
-}
-
-
-/* ---------- Reduced motion ---------- */
-
-@media (prefers-reduced-motion: reduce) {
-
-    *,
-    *::before,
-    *::after {
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-    }
-
-    .chat-typing span {
-        animation: none;
-    }
-}
-
-
-/* =========================================================
-   ADDITIONS (keyboard support, consistency, high contrast)
-========================================================= */
+.skip-link:focus { top: 0; }
 
 /* ---------- Screen-reader-only text ---------- */
-
 .sr-only {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    margin: -1px;
-    padding: 0;
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
-    border: 0;
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-
-/* ---------- Focus rings inside scrolling lists / ribbons ---------- */
-
-.recent-project:focus-visible,
-.history-item:focus-visible,
-.sidebar-item:focus-visible,
-.action-button:focus-visible,
-.inspector-tab:focus-visible,
-.mobile-nav-item:focus-visible {
-    outline-offset: -2px;
+.sr-only-focusable:focus,
+.sr-only-focusable:active {
+  position: static !important;
+  width: auto;
+  height: auto;
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
 }
 
-
-/* ---------- Project row: delete button is a sibling, not nested ---------- */
-
-.recent-project-row {
-    position: relative;
+/* ---------- Minimum touch / click target size ---------- */
+button,
+.btn,
+.tab,
+.nav-item,
+select,
+input[type="checkbox"],
+input[type="radio"] {
+  min-height: 40px;
 }
 
-.recent-project-row:hover .project-delete-button,
-.recent-project-row:focus-within .project-delete-button {
-    opacity: 1;
+.icon-btn {
+  min-width: 40px;
+  min-height: 40px;
+  justify-content: center;
 }
 
-.project-delete-button:focus-visible {
-    outline-offset: 0;
+/* ---------- Text legibility ---------- */
+body {
+  text-rendering: optimizeLegibility;
 }
 
+p, li { max-width: 75ch; }
 
-/* ---------- Consistency: one corner radius for controls ---------- */
+/* Links must not rely on color alone */
+a { text-decoration: underline; text-underline-offset: 3px; }
+.nav-item, .tab, .logo { text-decoration: none; }
 
-.icon-button,
-.toolbar-icon-button,
-.run-button,
-.action-button,
-.generate-button,
-.new-project-button,
-.sidebar-item,
-.search-box {
-    border-radius: 8px;
+/* ---------- State is never shown by color alone ---------- */
+.result-card.error::before   { content: "Error: ";   font-weight: 700; color: var(--red); }
+.result-card.success::before { content: "Success: "; font-weight: 700; color: var(--green-dark); }
+.result-card.warning::before { content: "Warning: "; font-weight: 700; color: #8A6500; }
+
+[aria-invalid="true"] {
+  border-color: var(--red) !important;
+  box-shadow: 0 0 0 3px rgba(230, 57, 70, 0.25);
 }
 
-/* Greeting bubble ("assistant") matches AI replies ("ai") */
-.chat-message.assistant .chat-avatar {
-    background: rgba(99, 102, 241, 0.18);
-    color: #a5b4fc;
+[aria-disabled="true"],
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 
-.chat-message.assistant .chat-bubble {
-    line-height: 1.55;
-    word-break: break-word;
+[aria-current="page"],
+[aria-selected="true"] {
+  font-weight: 700;
 }
 
-.chat-code-btn {
-    font-size: 11px;
+/* ---------- Better contrast for small text ---------- */
+.hint,
+.project-item small,
+.status {
+  color: var(--muted);
+}
+[data-theme="dark"] .hint,
+[data-theme="dark"] .project-item small {
+  color: #B5B5B5;
 }
 
+/* Yellow background always gets dark text */
+.badge,
+.copy-btn,
+mark,
+[class*="warn"] {
+  color: var(--ink);
+}
 
-/* ---------- Windows High Contrast / forced colors ---------- */
+mark { background: var(--yellow); padding: 0 3px; border-radius: 3px; }
 
+/* ---------- Respect reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ---------- Respect OS dark mode when no theme is chosen ---------- */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0B0B0B;
+    --surface: #161616;
+    --surface-2: #202020;
+    --ink: #F5F5F5;
+    --muted: #B5B5B5;
+    --border: #2A2A2A;
+    --editor-bg: #000000;
+  }
+}
+
+/* ---------- High contrast mode ---------- */
+@media (prefers-contrast: more) {
+  :root {
+    --border: #000000;
+    --muted: #333333;
+  }
+  [data-theme="dark"] {
+    --border: #FFFFFF;
+    --muted: #E0E0E0;
+  }
+  button, .btn, textarea, input, select, .result-card {
+    border-width: 2px;
+  }
+}
+
+/* Windows forced-colors mode */
 @media (forced-colors: active) {
+  button, .btn, .tab, .nav-item {
+    border: 1px solid ButtonText;
+  }
+  .tab.active, .nav-item.active {
+    outline: 2px solid Highlight;
+  }
+}
 
-    .skeleton,
-    .recent-project,
-    .history-item {
-        border: 1px solid CanvasText;
-    }
-
-    .code-editor-wrapper:focus-within,
-    .search-box:focus-within {
-        outline: 2px solid Highlight;
-    }
+/* ---------- Print ---------- */
+@media print {
+  .topbar, .sidebar, .inspector, .tool-row, .chat-input { display: none !important; }
+  .app { display: block; height: auto; }
+  body { background: #fff; color: #000; }
+  .editor, .terminal { background: #fff; color: #000; border: 1px solid #000; }
+  .editor pre, .editor code { color: #000; }
 }

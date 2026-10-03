@@ -749,3 +749,24 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   }
   .mobile-nav-item.active { color: var(--yellow); }
 }
+
+/* ---------- Fix: stop the editor getting squashed ---------- */
+.main-workspace > * {
+  flex-shrink: 0;
+}
+
+.code-studio {
+  min-height: 420px;
+}
+
+.code-editor-wrapper {
+  height: 360px;
+  min-height: 360px;
+  flex-shrink: 0;
+}
+
+/* Let the user drag the editor taller if they want */
+.code-studio {
+  resize: vertical;
+  overflow: auto;
+}

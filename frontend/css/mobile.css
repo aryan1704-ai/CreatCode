@@ -8,12 +8,19 @@
 }
 
 @media (max-width: 800px) {
-  /* 16px stops iOS from zooming when you tap an input */
+  /* 16px stops iOS zooming on inputs (NOT the code editor, see below) */
   .prompt-input,
   .chat-input-area textarea,
-  .search-box input,
-  #codeEditor {
+  .search-box input {
     font-size: 16px;
+  }
+
+  /* Code editor: textarea and highlight layer must match exactly */
+  #codeEditor,
+  .syntax-highlight,
+  .line-numbers {
+    font-size: 14px;
+    line-height: 1.6;
   }
 
   /* Generate button full width */
@@ -31,7 +38,13 @@
   .action-ribbon::-webkit-scrollbar { display: none; }
   .action-button { flex: 0 0 auto; white-space: nowrap; }
 
-  .code-editor-wrapper { height: 280px; }
+  /* Editor height: set BOTH so it overrides style.css */
+  .code-studio { min-height: 0; }
+  .code-editor-wrapper {
+    height: 320px;
+    min-height: 320px;
+  }
+
   .terminal-output { max-height: 150px; }
   .modal-card { max-height: 85vh; }
   .toast-container { left: 12px; right: 12px; bottom: 76px; }

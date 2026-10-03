@@ -1,205 +1,52 @@
-/* =========================================================
-   CreatCode: Mobile and tablet
-   Load LAST (after style.css, a11y.css, loading.css)
-   ========================================================= */
+/* CreatCode: phone tweaks (loaded after style.css) */
 
-/* ---------- Safe areas (phone notches) ---------- */
 @supports (padding: max(0px)) {
   .topbar {
-    padding-left: max(18px, env(safe-area-inset-left));
-    padding-right: max(18px, env(safe-area-inset-right));
-  }
-  .main {
-    padding-bottom: max(20px, env(safe-area-inset-bottom));
+    padding-left: max(12px, env(safe-area-inset-left));
+    padding-right: max(12px, env(safe-area-inset-right));
   }
 }
 
-/* ---------- Tablet (up to 1100px): inspector becomes a slide-over ---------- */
-@media (max-width: 1100px) {
-  .app {
-    grid-template-columns: 220px 1fr;
-    grid-template-areas:
-      "topbar topbar"
-      "sidebar main";
-  }
-
-  .inspector {
-    display: flex;
-    position: fixed;
-    top: 56px;
-    right: 0;
-    bottom: 0;
-    z-index: 200;
-    width: min(380px, 92vw);
-    transform: translateX(100%);
-    transition: transform 0.25s ease;
-    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.25);
-  }
-  .inspector.open { transform: translateX(0); }
-
-  .inspector-toggle { display: inline-flex; }
-}
-
-/* Hidden on desktop */
-.inspector-toggle,
-.sidebar-toggle { display: none; }
-
-/* ---------- Phone (up to 720px) ---------- */
-@media (max-width: 720px) {
-  html { -webkit-text-size-adjust: 100%; }
-
-  body { font-size: 15px; }
-
-  .app {
-    display: block;
-    height: auto;
-    min-height: 100vh;
-    min-height: 100dvh;
-  }
-
-  /* Top bar stays on top */
-  .topbar {
-    position: sticky;
-    top: 0;
-    z-index: 300;
-    height: 52px;
-    padding: 0 12px;
-  }
-  .logo { font-size: 16px; }
-  .topbar .status { display: none; }
-
-  .sidebar-toggle,
-  .inspector-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 40px;
-    min-height: 40px;
-    background: transparent;
-    color: #fff;
-    border: 1px solid #444;
-  }
-
-  /* Sidebar becomes a slide-in menu */
-  .sidebar {
-    position: fixed;
-    top: 52px;
-    left: 0;
-    bottom: 0;
-    z-index: 250;
-    width: min(290px, 85vw);
-    transform: translateX(-100%);
-    transition: transform 0.25s ease;
-    border-right: 1px solid var(--border);
-    box-shadow: 8px 0 24px rgba(0, 0, 0, 0.25);
-  }
-  .sidebar.open { transform: translateX(0); }
-
-  /* Dim the page behind an open menu */
-  .backdrop {
-    display: none;
-    position: fixed;
-    inset: 52px 0 0 0;
-    z-index: 220;
-    background: rgba(0, 0, 0, 0.5);
-  }
-  .backdrop.active { display: block; }
-
-  /* Inspector becomes a bottom sheet */
-  .inspector {
-    top: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: 75vh;
-    height: 75dvh;
-    transform: translateY(100%);
-    border-left: none;
-    border-top: 3px solid var(--red);
-    border-radius: 16px 16px 0 0;
-    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.3);
-  }
-  .inspector.open { transform: translateY(0); }
-
-  /* Main content */
-  .main { padding: 14px; gap: 12px; overflow: visible; }
-
-  .main h1,
-  .hero-title { font-size: 21px; }
-
-  .prompt-card { padding: 12px; }
-
-  /* 16px inputs stop iOS from zooming on focus */
-  textarea,
-  input[type="text"],
-  select {
+@media (max-width: 800px) {
+  /* 16px stops iOS from zooming when you tap an input */
+  .prompt-input,
+  .chat-input-area textarea,
+  .search-box input,
+  #codeEditor {
     font-size: 16px;
   }
-  textarea { min-height: 110px; }
 
-  /* Tool buttons: horizontal scroll row instead of wrapping */
-  .tool-row {
+  /* Generate button full width */
+  .prompt-footer { flex-direction: column; align-items: stretch; }
+  .generate-button { width: 100%; min-height: 46px; font-size: 15px; }
+  .prompt-helper { justify-content: center; }
+
+  /* Tool buttons scroll sideways instead of wrapping */
+  .action-ribbon {
     flex-wrap: nowrap;
     overflow-x: auto;
     padding-bottom: 6px;
-    margin-right: -14px;
-    padding-right: 14px;
-    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
   }
-  .tool-row::-webkit-scrollbar { display: none; }
-  .tool-row button { flex: 0 0 auto; white-space: nowrap; }
+  .action-ribbon::-webkit-scrollbar { display: none; }
+  .action-button { flex: 0 0 auto; white-space: nowrap; }
 
-  /* Main Generate button goes full width */
-  .btn-primary,
-  #generateBtn {
-    width: 100%;
-    justify-content: center;
-    min-height: 46px;
-    font-size: 15px;
-  }
-
-  /* Editor and terminal */
-  .editor pre { min-height: 180px; max-height: 50vh; font-size: 12.5px; }
-  .editor-header { flex-wrap: wrap; gap: 8px; }
-  .editor-status { flex-wrap: wrap; gap: 8px 14px; }
-
-  .terminal { max-height: 150px; font-size: 12px; }
-
-  /* Chat input sticks to the bottom of the sheet */
-  .chat-input {
-    position: sticky;
-    bottom: 0;
-    padding-bottom: max(12px, env(safe-area-inset-bottom));
-  }
-  .chat-msg { max-width: 94%; }
-
-  .loading-overlay { position: fixed; z-index: 400; }
+  .code-editor-wrapper { height: 280px; }
+  .terminal-output { max-height: 150px; }
+  .modal-card { max-height: 85vh; }
+  .toast-container { left: 12px; right: 12px; bottom: 76px; }
+  .toast { max-width: none; }
 }
 
-/* ---------- Small phones (up to 380px) ---------- */
 @media (max-width: 380px) {
-  .main { padding: 10px; }
-  .logo { font-size: 15px; }
-  .tab { padding: 10px 6px; font-size: 13px; }
-  button, .btn { padding: 8px 10px; font-size: 12.5px; }
+  .brand-name { font-size: 15px; }
+  .action-button { padding: 8px 10px; font-size: 12.5px; }
 }
 
-/* ---------- Landscape phones ---------- */
-@media (max-height: 480px) and (orientation: landscape) {
-  .topbar { height: 44px; }
-  .sidebar, .backdrop { top: 44px; }
-  .inspector { height: 85vh; }
-  .editor pre { max-height: 40vh; min-height: 120px; }
-}
-
-/* ---------- Touch devices: no sticky hover colors ---------- */
 @media (hover: none) {
-  .nav-item:hover,
-  .project-item:hover { background: transparent; }
-  .btn-secondary:hover,
-  .tool-btn:hover { background: transparent; color: var(--ink); }
-  .btn-primary:hover, #generateBtn:hover { background: var(--red); }
-  .btn-run:hover, #runBtn:hover { background: var(--green); }
+  .sidebar-item:hover,
+  .recent-project:hover { background: transparent; }
+  .action-button:hover { background: transparent; color: var(--ink); }
+  .generate-button:hover { background: var(--red); }
+  .run-button:hover { background: var(--green); }
 }

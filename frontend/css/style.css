@@ -637,7 +637,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   border: 1px solid var(--border);
   border-radius: 12px;
   font-size: 13px;
-  white-space: pre-wrap; word-break: break-word;
+  white-space: normal; 
+  word-break: break-word;
 }
 .chat-message.user .chat-bubble { background: #111; color: #fff; border-color: #111; }
 
@@ -757,6 +758,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .code-studio {
   min-height: 420px;
+  resize: vertical;
+  overflow: auto;
 }
 
 .code-editor-wrapper {
@@ -765,8 +768,3 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   flex-shrink: 0;
 }
 
-/* Let the user drag the editor taller if they want */
-.code-studio {
-  resize: vertical;
-  overflow: auto;
-}

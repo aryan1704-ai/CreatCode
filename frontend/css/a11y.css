@@ -1,7 +1,3 @@
-/* =========================================================
-   CreatCode: Accessibility
-   Load AFTER style.css
-   ========================================================= */
 
 /* ---------- Focus visibility (keyboard users) ---------- */
 :focus { outline: none; }

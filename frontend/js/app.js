@@ -1883,10 +1883,8 @@ function setupAccessibility() {
     // Icon-only buttons
     const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
     setLabel("#themeToggle", currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode");
-    setLabel('.icon-button[title="Settings"]', "Settings");
     setLabel("#copyBtn", "Copy code");
     setLabel("#downloadBtn", "Download code");
-    setLabel(".inspector-settings", "Inspector settings");
     setLabel("#chatSendBtn", "Send message");
     setLabel("#closePromptModal", "Close dialog");
 

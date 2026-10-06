@@ -13,10 +13,9 @@
 }
 
 /* On dark surfaces, use a white ring so it stays visible */
-.topbar :focus-visible,
-.editor :focus-visible,
-.terminal :focus-visible,
-.nav-item.active:focus-visible {
+[data-theme="dark"] .topbar :focus-visible,
+[data-theme="dark"] .code-studio :focus-visible,
+[data-theme="dark"] .terminal-panel :focus-visible {
   outline-color: #FFFFFF;
 }
 

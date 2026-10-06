@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 
 <head>
     <meta charset="UTF-8">
@@ -8,6 +8,17 @@
     <link rel="icon" href="data:,">
     <title>CreatCode — AI Code Generator</title>
     <link rel="icon" type="image/png" href="assets/CreatCode_logo.png">
+
+    <!-- Theme Initialization (prevents flash of wrong theme) -->
+    <script>
+        (function () {
+            try {
+                var savedTheme = localStorage.getItem("creatcode_theme");
+                var theme = savedTheme === "light" ? "light" : "dark";
+                document.documentElement.setAttribute("data-theme", theme);
+            } catch (e) {}
+        })();
+    </script>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,7 +72,7 @@
 
             <div class="topbar-actions">
 
-                <button class="icon-button" id="themeToggle" title="Toggle theme">
+                <button class="icon-button" id="themeToggle" title="Switch to light mode" aria-label="Switch to light mode">
                     <i data-lucide="sun"></i>
                 </button>
 

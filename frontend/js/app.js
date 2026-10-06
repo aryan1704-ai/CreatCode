@@ -1374,25 +1374,95 @@ function syncEditorScroll() {
 
 
 /* =========================================================
-   SETUP: THEME
+   SETUP: THEME (Light & Dark Mode)
 ========================================================= */
 
+const THEME_STORAGE_KEY = "creatcode_theme";
+
+function getStoredTheme() {
+    try {
+        const saved = localStorage.getItem(THEME_STORAGE_KEY);
+        if (saved === "light" || saved === "dark") {
+            return saved;
+        }
+    } catch {
+        // Silently catch localStorage restrictions
+    }
+    // Dark mode is default as per project specification
+    return "dark";
+}
+
+function applyTheme(theme, showNotification = false) {
+    const activeTheme = theme === "light" ? "light" : "dark";
+
+    // Set data-theme on root and body for full CSS cascading
+    document.documentElement.setAttribute("data-theme", activeTheme);
+    if (document.body) {
+        document.body.setAttribute("data-theme", activeTheme);
+        document.body.classList.toggle("dark-theme", activeTheme === "dark");
+        document.body.classList.toggle("light-theme", activeTheme === "light");
+    }
+
+    try {
+        localStorage.setItem(THEME_STORAGE_KEY, activeTheme);
+    } catch {
+        // Silently catch localStorage restrictions
+    }
+
+    // Update toggle button icon, title, and aria-label
+    const themeButton = document.getElementById("themeToggle");
+    if (themeButton) {
+        if (activeTheme === "dark") {
+            themeButton.innerHTML = `<i data-lucide="sun"></i>`;
+            themeButton.title = "Switch to light mode";
+            themeButton.setAttribute("aria-label", "Switch to light mode");
+        } else {
+            themeButton.innerHTML = `<i data-lucide="moon"></i>`;
+            themeButton.title = "Switch to dark mode";
+            themeButton.setAttribute("aria-label", "Switch to dark mode");
+        }
+        refreshIcons();
+    }
+
+    // Refresh editor syntax highlighting so tokens match new theme palette
+    updateSyntaxHighlight();
+
+    if (showNotification) {
+        showToast(
+            activeTheme === "light" ? "Light mode enabled." : "Dark mode enabled."
+        );
+    }
+}
+
+function toggleTheme() {
+    const currentTheme =
+        document.documentElement.getAttribute("data-theme") || "dark";
+    const nextTheme = currentTheme === "dark" ? "light" : "dark";
+    applyTheme(nextTheme, true);
+}
+
 function setupTheme() {
+    const initialTheme = getStoredTheme();
+    applyTheme(initialTheme, false);
 
     const themeButton = document.getElementById("themeToggle");
+    if (themeButton) {
+        themeButton.addEventListener("click", toggleTheme);
+    }
 
-    if (!themeButton) return;
+    // Optional: listen to system theme changes if no explicit preference saved
+    if (window.matchMedia) {
+        window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", event => {
+            let hasExplicit = false;
+            try {
+                hasExplicit = !!localStorage.getItem(THEME_STORAGE_KEY);
+            } catch {}
 
-    themeButton.addEventListener("click", () => {
-
-        document.body.classList.toggle("light-mode");
-
-        showToast(
-            document.body.classList.contains("light-mode")
-                ? "Light mode enabled."
-                : "Dark mode enabled."
-        );
-    });
+            if (!hasExplicit) {
+                applyTheme(event.matches ? "dark" : "light", false);
+            }
+        });
+    }
 }
 
 
@@ -1811,7 +1881,8 @@ function setupAccessibility() {
     }
 
     // Icon-only buttons
-    setLabel("#themeToggle", "Toggle theme");
+    const currentTheme = document.documentElement.getAttribute("data-theme") || "dark";
+    setLabel("#themeToggle", currentTheme === "dark" ? "Switch to light mode" : "Switch to dark mode");
     setLabel('.icon-button[title="Settings"]', "Settings");
     setLabel("#copyBtn", "Copy code");
     setLabel("#downloadBtn", "Download code");

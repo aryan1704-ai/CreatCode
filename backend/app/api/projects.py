@@ -1,9 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
+from typing import Optional
 
-from database import SessionLocal
-from models import Project
+from auth import get_current_user, get_db
+from models import Project, User, CodeGeneration
 
 
 router = APIRouter(
@@ -13,89 +14,56 @@ router = APIRouter(
 
 
 class ProjectCreate(BaseModel):
-    user_id: int = 1
-    name: str
-    description: str = ""
+    name: str = Field(..., min_length=1, max_length=150)
+    description: Optional[str] = ""
 
 
 class ProjectUpdate(BaseModel):
-    name: str
-    description: str = ""
+    name: str = Field(..., min_length=1, max_length=150)
+    description: Optional[str] = ""
 
 
-@router.post("/")
-def create_project(request: ProjectCreate):
+@router.post("/", status_code=status.HTTP_201_CREATED)
+def create_project(
+    request: ProjectCreate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    project = Project(
+        user_id=current_user.id,
+        name=request.name.strip(),
+        description=(request.description or "").strip()
+    )
 
-    db: Session = SessionLocal()
+    db.add(project)
+    db.commit()
+    db.refresh(project)
 
-    try:
-        project = Project(
-            user_id=request.user_id,
-            name=request.name,
-            description=request.description
-        )
-
-        db.add(project)
-        db.commit()
-        db.refresh(project)
-
-        return {
-            "status": "success",
-            "message": "Project created successfully",
-            "project_id": project.id,
-            "name": project.name
-        }
-
-    finally:
-        db.close()
+    return {
+        "status": "success",
+        "message": "Project created successfully",
+        "project_id": project.id,
+        "name": project.name,
+        "description": project.description
+    }
 
 
 @router.get("/")
-def get_projects():
+def get_projects(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    projects = (
+        db.query(Project)
+        .filter(Project.user_id == current_user.id)
+        .order_by(Project.updated_at.desc(), Project.id.desc())
+        .all()
+    )
 
-    db: Session = SessionLocal()
-
-    try:
-        projects = db.query(Project).all()
-
-        return {
-            "status": "success",
-            "projects": [
-                {
-                    "id": project.id,
-                    "user_id": project.user_id,
-                    "name": project.name,
-                    "description": project.description,
-                    "created_at": project.created_at,
-                    "updated_at": project.updated_at
-                }
-                for project in projects
-            ]
-        }
-
-    finally:
-        db.close()
-
-
-@router.get("/{project_id}")
-def get_project(project_id: int):
-
-    db: Session = SessionLocal()
-
-    try:
-        project = db.query(Project).filter(
-            Project.id == project_id
-        ).first()
-
-        if not project:
-            raise HTTPException(
-                status_code=404,
-                detail="Project not found"
-            )
-
-        return {
-            "status": "success",
-            "project": {
+    return {
+        "status": "success",
+        "projects": [
+            {
                 "id": project.id,
                 "user_id": project.user_id,
                 "name": project.name,
@@ -103,70 +71,110 @@ def get_project(project_id: int):
                 "created_at": project.created_at,
                 "updated_at": project.updated_at
             }
-        }
+            for project in projects
+        ]
+    }
 
-    finally:
-        db.close()
+
+@router.get("/{project_id}")
+def get_project(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    project = (
+        db.query(Project)
+        .filter(
+            Project.id == project_id,
+            Project.user_id == current_user.id
+        )
+        .first()
+    )
+
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or unauthorized access"
+        )
+
+    return {
+        "status": "success",
+        "project": {
+            "id": project.id,
+            "user_id": project.user_id,
+            "name": project.name,
+            "description": project.description,
+            "created_at": project.created_at,
+            "updated_at": project.updated_at
+        }
+    }
 
 
 @router.put("/{project_id}")
 def update_project(
     project_id: int,
-    request: ProjectUpdate
+    request: ProjectUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
+    project = (
+        db.query(Project)
+        .filter(
+            Project.id == project_id,
+            Project.user_id == current_user.id
+        )
+        .first()
+    )
 
-    db: Session = SessionLocal()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or unauthorized access"
+        )
 
-    try:
-        project = db.query(Project).filter(
-            Project.id == project_id
-        ).first()
+    project.name = request.name.strip()
+    project.description = (request.description or "").strip()
 
-        if not project:
-            raise HTTPException(
-                status_code=404,
-                detail="Project not found"
-            )
+    db.commit()
+    db.refresh(project)
 
-        project.name = request.name
-        project.description = request.description
-
-        db.commit()
-        db.refresh(project)
-
-        return {
-            "status": "success",
-            "message": "Project updated successfully",
-            "project_id": project.id
-        }
-
-    finally:
-        db.close()
+    return {
+        "status": "success",
+        "message": "Project updated successfully",
+        "project_id": project.id,
+        "name": project.name,
+        "description": project.description
+    }
 
 
 @router.delete("/{project_id}")
-def delete_project(project_id: int):
+def delete_project(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    project = (
+        db.query(Project)
+        .filter(
+            Project.id == project_id,
+            Project.user_id == current_user.id
+        )
+        .first()
+    )
 
-    db: Session = SessionLocal()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or unauthorized access"
+        )
 
-    try:
-        project = db.query(Project).filter(
-            Project.id == project_id
-        ).first()
+    # Cascade delete any code generations associated with this project
+    db.query(CodeGeneration).filter(CodeGeneration.project_id == project_id).delete()
 
-        if not project:
-            raise HTTPException(
-                status_code=404,
-                detail="Project not found"
-            )
+    db.delete(project)
+    db.commit()
 
-        db.delete(project)
-        db.commit()
-
-        return {
-            "status": "success",
-            "message": "Project deleted successfully"
-        }
-
-    finally:
-        db.close()
+    return {
+        "status": "success",
+        "message": "Project deleted successfully"
+    }

@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, Base
 from models import User
 
+from api.auth import router as auth_router
 from api.generate import router as generate_router
 from api.explain import router as explain_router
 from api.debug import router as debug_router
@@ -90,6 +91,7 @@ def health():
 
 
 # Include API routers
+app.include_router(auth_router)
 app.include_router(generate_router)
 app.include_router(explain_router)
 app.include_router(debug_router)

@@ -10,13 +10,14 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100), nullable=False)
     email = Column(String(150), unique=True, nullable=False, index=True)
+    password_hash = Column(String(255), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
 
 class Project(Base):
     __tablename__ = "projects"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, nullable=False)
+    user_id = Column(Integer, nullable=False, index=True)
     name = Column(String(150), nullable=False)
     description = Column(String(500), nullable=True)
     created_at = Column(DateTime, server_default=func.now())
@@ -30,7 +31,8 @@ class CodeGeneration(Base):
     __tablename__ = "code_generations"
 
     id = Column(Integer, primary_key=True, index=True)
-    project_id = Column(Integer, nullable=False)
+    project_id = Column(Integer, nullable=True, index=True)
+    user_id = Column(Integer, nullable=True, index=True)
 
     prompt = Column(String(2000), nullable=False)
     generated_code = Column(String(10000), nullable=False)

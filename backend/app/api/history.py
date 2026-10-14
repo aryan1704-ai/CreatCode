@@ -1,8 +1,8 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from database import SessionLocal
-from models import CodeGeneration
+from auth import get_current_user, get_db
+from models import CodeGeneration, Project, User
 
 
 router = APIRouter(
@@ -12,130 +12,180 @@ router = APIRouter(
 
 
 @router.get("/")
-def get_all_history():
+def get_all_history(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Fetch all project IDs owned by this user
+    user_project_ids = [
+        p.id for p in db.query(Project.id).filter(Project.user_id == current_user.id).all()
+    ]
 
-    db: Session = SessionLocal()
-
-    try:
-        generations = (
-            db.query(CodeGeneration)
-            .order_by(CodeGeneration.created_at.desc())
-            .all()
+    generations = (
+        db.query(CodeGeneration)
+        .filter(
+            (CodeGeneration.user_id == current_user.id) |
+            (CodeGeneration.project_id.in_(user_project_ids))
         )
+        .order_by(CodeGeneration.created_at.desc())
+        .all()
+    )
 
-        return {
-            "status": "success",
-            "history": [
-                {
-                    "id": item.id,
-                    "project_id": item.project_id,
-                    "prompt": item.prompt,
-                    "generated_code": item.generated_code,
-                    "language": item.language,
-                    "action": item.action,
-                    "created_at": item.created_at
-                }
-                for item in generations
-            ]
-        }
-
-    finally:
-        db.close()
+    return {
+        "status": "success",
+        "history": [
+            {
+                "id": item.id,
+                "project_id": item.project_id,
+                "prompt": item.prompt,
+                "generated_code": item.generated_code,
+                "language": item.language,
+                "action": item.action,
+                "created_at": item.created_at
+            }
+            for item in generations
+        ]
+    }
 
 
 @router.get("/project/{project_id}")
-def get_project_history(project_id: int):
+def get_project_history(
+    project_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    # Verify user owns the project
+    project = (
+        db.query(Project)
+        .filter(
+            Project.id == project_id,
+            Project.user_id == current_user.id
+        )
+        .first()
+    )
 
-    db: Session = SessionLocal()
-
-    try:
-        generations = (
-            db.query(CodeGeneration)
-            .filter(CodeGeneration.project_id == project_id)
-            .order_by(CodeGeneration.created_at.desc())
-            .all()
+    if not project:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Project not found or unauthorized access"
         )
 
-        return {
-            "status": "success",
-            "project_id": project_id,
-            "history": [
-                {
-                    "id": item.id,
-                    "prompt": item.prompt,
-                    "generated_code": item.generated_code,
-                    "language": item.language,
-                    "action": item.action,
-                    "created_at": item.created_at
-                }
-                for item in generations
-            ]
-        }
+    generations = (
+        db.query(CodeGeneration)
+        .filter(CodeGeneration.project_id == project_id)
+        .order_by(CodeGeneration.created_at.desc())
+        .all()
+    )
 
-    finally:
-        db.close()
+    return {
+        "status": "success",
+        "project_id": project_id,
+        "history": [
+            {
+                "id": item.id,
+                "prompt": item.prompt,
+                "generated_code": item.generated_code,
+                "language": item.language,
+                "action": item.action,
+                "created_at": item.created_at
+            }
+            for item in generations
+        ]
+    }
 
 
 @router.get("/{generation_id}")
-def get_generation(generation_id: int):
+def get_generation(
+    generation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    generation = (
+        db.query(CodeGeneration)
+        .filter(CodeGeneration.id == generation_id)
+        .first()
+    )
 
-    db: Session = SessionLocal()
-
-    try:
-        generation = (
-            db.query(CodeGeneration)
-            .filter(CodeGeneration.id == generation_id)
-            .first()
+    if not generation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Code generation record not found"
         )
 
-        if not generation:
-            raise HTTPException(
-                status_code=404,
-                detail="Code generation not found"
-            )
+    # Check ownership
+    is_owner = False
+    if generation.user_id == current_user.id:
+        is_owner = True
+    elif generation.project_id:
+        proj = (
+            db.query(Project)
+            .filter(Project.id == generation.project_id, Project.user_id == current_user.id)
+            .first()
+        )
+        if proj:
+            is_owner = True
 
-        return {
-            "status": "success",
-            "generation": {
-                "id": generation.id,
-                "project_id": generation.project_id,
-                "prompt": generation.prompt,
-                "generated_code": generation.generated_code,
-                "language": generation.language,
-                "action": generation.action,
-                "created_at": generation.created_at
-            }
+    if not is_owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied to this history item"
+        )
+
+    return {
+        "status": "success",
+        "generation": {
+            "id": generation.id,
+            "project_id": generation.project_id,
+            "prompt": generation.prompt,
+            "generated_code": generation.generated_code,
+            "language": generation.language,
+            "action": generation.action,
+            "created_at": generation.created_at
         }
-
-    finally:
-        db.close()
+    }
 
 
 @router.delete("/{generation_id}")
-def delete_generation(generation_id: int):
+def delete_generation(
+    generation_id: int,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    generation = (
+        db.query(CodeGeneration)
+        .filter(CodeGeneration.id == generation_id)
+        .first()
+    )
 
-    db: Session = SessionLocal()
-
-    try:
-        generation = (
-            db.query(CodeGeneration)
-            .filter(CodeGeneration.id == generation_id)
-            .first()
+    if not generation:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Code generation record not found"
         )
 
-        if not generation:
-            raise HTTPException(
-                status_code=404,
-                detail="Code generation not found"
-            )
+    # Check ownership
+    is_owner = False
+    if generation.user_id == current_user.id:
+        is_owner = True
+    elif generation.project_id:
+        proj = (
+            db.query(Project)
+            .filter(Project.id == generation.project_id, Project.user_id == current_user.id)
+            .first()
+        )
+        if proj:
+            is_owner = True
 
-        db.delete(generation)
-        db.commit()
+    if not is_owner:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied to delete this history item"
+        )
 
-        return {
-            "status": "success",
-            "message": "Code history deleted successfully"
-        }
+    db.delete(generation)
+    db.commit()
 
-    finally:
-        db.close()
+    return {
+        "status": "success",
+        "message": "Code history deleted successfully"
+    }

@@ -3,7 +3,11 @@
    Projects + History Integration
 ========================================================= */
 
-const API_BASE_URL = "https://creatcode-api.onrender.com";
+const API_BASE_URL = (
+    window.location.hostname === "localhost" ||
+    window.location.hostname === "127.0.0.1" ||
+    window.location.protocol === "file:"
+) ? "http://127.0.0.1:8000" : "https://creatcode-api.onrender.com";
 
 let currentLanguage = "Auto";
 let currentExtension = "txt";
@@ -122,12 +126,19 @@ function showToast(message, type = "info") {
 
 async function apiRequest(endpoint, options = {}) {
 
+    const token = getAuthToken();
+    const headers = {
+        "Content-Type": "application/json",
+        ...(options.headers || {})
+    };
+
+    if (token && !headers["Authorization"]) {
+        headers["Authorization"] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
-        headers: {
-            "Content-Type": "application/json",
-            ...(options.headers || {})
-        }
+        headers
     });
 
     let data = null;
@@ -138,10 +149,16 @@ async function apiRequest(endpoint, options = {}) {
         data = null;
     }
 
+    if (response.status === 401 && token) {
+        clearAuth();
+        showToast("Your session has expired. Please sign in again.", "warning");
+        throw new Error(data?.detail || "Session expired");
+    }
+
     if (!response.ok) {
         const message =
-            data?.message ||
             data?.detail ||
+            data?.message ||
             `Request failed with status ${response.status}`;
 
         throw new Error(message);
@@ -162,7 +179,53 @@ async function apiRequest(endpoint, options = {}) {
    PROJECTS — LOAD
 ========================================================= */
 
+function renderProjectsGuestPrompt() {
+    const recentSection = document.querySelector(".recent-section");
+    if (!recentSection) return;
+
+    const heading = recentSection.querySelector(".sidebar-heading");
+    recentSection.innerHTML = "";
+
+    if (heading) {
+        recentSection.appendChild(heading);
+    } else {
+        const newHeading = document.createElement("div");
+        newHeading.className = "sidebar-heading";
+        newHeading.textContent = "RECENT PROJECTS";
+        recentSection.appendChild(newHeading);
+    }
+
+    const card = document.createElement("div");
+    card.className = "sidebar-auth-card";
+    card.innerHTML = `
+        <p>Sign in to save and manage your projects across devices.</p>
+        <button type="button" id="sidebarSignInBtn">
+            <i data-lucide="log-in" style="width: 14px; height: 14px; vertical-align: middle; margin-right: 4px;"></i>
+            Sign In / Sign Up
+        </button>
+    `;
+    recentSection.appendChild(card);
+
+    const btn = card.querySelector("#sidebarSignInBtn");
+    if (btn) {
+        btn.addEventListener("click", () => openAuthModal("signin"));
+    }
+
+    refreshIcons();
+}
+
 async function loadProjects() {
+
+    if (!getAuthToken()) {
+        projects = [];
+        selectedProjectId = null;
+        projectsLoadedOnce = true;
+        renderProjectsGuestPrompt();
+        updateProjectCount(0);
+        updateSelectedProjectUI();
+        renderHistory([]);
+        return;
+    }
 
     if (!projectsLoadedOnce) {
         renderProjectsSkeleton();
@@ -445,6 +508,12 @@ function updateSelectedProjectUI() {
 
 async function createProject() {
 
+    if (!getAuthToken()) {
+        showToast("Please sign in to create and save projects.", "warning");
+        openAuthModal("signin");
+        return;
+    }
+
     const name = window.prompt("Enter project name:");
 
     if (!name || !name.trim()) return;
@@ -458,7 +527,6 @@ async function createProject() {
         const project = await apiRequest("/api/projects/", {
             method: "POST",
             body: JSON.stringify({
-                user_id: 1,
                 name: name.trim(),
                 description: description?.trim() || ""
             })
@@ -466,8 +534,8 @@ async function createProject() {
 
         showToast(`Project "${project.name}" created successfully.`);
 
-        if (project.id) {
-            selectedProjectId = project.id;
+        if (project.project_id || project.id) {
+            selectedProjectId = project.project_id || project.id;
         }
 
         await loadProjects();
@@ -2172,6 +2240,408 @@ function setupMobileNav() {
 
 
 /* =========================================================
+   AUTHENTICATION & USER SESSION SYSTEM
+========================================================= */
+
+const AUTH_TOKEN_KEY = "creatcode_auth_token";
+const AUTH_USER_KEY = "creatcode_auth_user";
+
+function getAuthToken() {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+}
+
+function getAuthUser() {
+    try {
+        const raw = localStorage.getItem(AUTH_USER_KEY);
+        return raw ? JSON.parse(raw) : null;
+    } catch {
+        return null;
+    }
+}
+
+function setAuth(token, user) {
+    if (token) {
+        localStorage.setItem(AUTH_TOKEN_KEY, token);
+    }
+    if (user) {
+        localStorage.setItem(AUTH_USER_KEY, JSON.stringify(user));
+    }
+    updateAuthUI();
+}
+
+function clearAuth() {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_USER_KEY);
+    updateAuthUI();
+}
+
+function updateAuthUI() {
+    const token = getAuthToken();
+    const user = getAuthUser();
+
+    const btnOpenAuthModal = document.getElementById("btnOpenAuthModal");
+    const userProfileMenu = document.getElementById("userProfileMenu");
+    const avatarInitial = document.getElementById("avatarInitial");
+    const dropdownAvatar = document.getElementById("dropdownAvatar");
+    const dropdownUserName = document.getElementById("dropdownUserName");
+    const dropdownUserEmail = document.getElementById("dropdownUserEmail");
+    const profileDropdown = document.getElementById("profileDropdown");
+
+    if (token && user) {
+        if (btnOpenAuthModal) btnOpenAuthModal.classList.add("hidden");
+        if (userProfileMenu) userProfileMenu.classList.remove("hidden");
+
+        const initial = (user.name || user.email || "U").trim().charAt(0).toUpperCase();
+        if (avatarInitial) avatarInitial.textContent = initial;
+        if (dropdownAvatar) dropdownAvatar.textContent = initial;
+        if (dropdownUserName) dropdownUserName.textContent = user.name || "Developer";
+        if (dropdownUserEmail) dropdownUserEmail.textContent = user.email || "";
+    } else {
+        if (btnOpenAuthModal) btnOpenAuthModal.classList.remove("hidden");
+        if (userProfileMenu) userProfileMenu.classList.add("hidden");
+        if (profileDropdown) profileDropdown.classList.add("hidden");
+    }
+
+    refreshIcons();
+}
+
+function openAuthModal(tab = "signin") {
+    const modal = document.getElementById("authModalOverlay");
+    const alertBox = document.getElementById("authAlert");
+    if (!modal) return;
+
+    modal.classList.remove("hidden");
+    if (alertBox) alertBox.classList.add("hidden");
+
+    switchAuthTab(tab);
+    refreshIcons();
+}
+
+function closeAuthModal() {
+    const modal = document.getElementById("authModalOverlay");
+    if (!modal) return;
+    modal.classList.add("hidden");
+
+    const alertBox = document.getElementById("authAlert");
+    if (alertBox) alertBox.classList.add("hidden");
+
+    const signInForm = document.getElementById("signInForm");
+    const signUpForm = document.getElementById("signUpForm");
+    if (signInForm) signInForm.reset();
+    if (signUpForm) signUpForm.reset();
+}
+
+function switchAuthTab(tab) {
+    const tabSignIn = document.getElementById("tabSignIn");
+    const tabSignUp = document.getElementById("tabSignUp");
+    const signInForm = document.getElementById("signInForm");
+    const signUpForm = document.getElementById("signUpForm");
+    const modalTitle = document.getElementById("authModalTitle");
+    const modalSubtitle = document.getElementById("authModalSubtitle");
+    const alertBox = document.getElementById("authAlert");
+
+    if (alertBox) alertBox.classList.add("hidden");
+
+    if (tab === "signin") {
+        if (tabSignIn) {
+            tabSignIn.classList.add("active");
+            tabSignIn.setAttribute("aria-selected", "true");
+        }
+        if (tabSignUp) {
+            tabSignUp.classList.remove("active");
+            tabSignUp.setAttribute("aria-selected", "false");
+        }
+        if (signInForm) signInForm.classList.remove("hidden");
+        if (signUpForm) signUpForm.classList.add("hidden");
+        if (modalTitle) modalTitle.textContent = "Welcome to CreatCode";
+        if (modalSubtitle) modalSubtitle.textContent = "Sign in to sync your personal projects & code history";
+
+        const emailInput = document.getElementById("signInEmail");
+        if (emailInput) setTimeout(() => emailInput.focus(), 100);
+    } else {
+        if (tabSignIn) {
+            tabSignIn.classList.remove("active");
+            tabSignIn.setAttribute("aria-selected", "false");
+        }
+        if (tabSignUp) {
+            tabSignUp.classList.add("active");
+            tabSignUp.setAttribute("aria-selected", "true");
+        }
+        if (signInForm) signInForm.classList.add("hidden");
+        if (signUpForm) signUpForm.classList.remove("hidden");
+        if (modalTitle) modalTitle.textContent = "Create an account";
+        if (modalSubtitle) modalSubtitle.textContent = "Get your own workspace with synchronized projects & history";
+
+        const nameInput = document.getElementById("signUpName");
+        if (nameInput) setTimeout(() => nameInput.focus(), 100);
+    }
+
+    refreshIcons();
+}
+
+function showAuthAlert(message, type = "error") {
+    const alertBox = document.getElementById("authAlert");
+    const messageEl = document.getElementById("authAlertMessage");
+    const icon = document.getElementById("authAlertIcon");
+
+    if (!alertBox || !messageEl) return;
+
+    messageEl.textContent = message;
+    alertBox.className = `auth-alert ${type}`;
+    alertBox.classList.remove("hidden");
+
+    if (icon) {
+        icon.setAttribute("data-lucide", type === "success" ? "check-circle" : "alert-circle");
+    }
+    refreshIcons();
+}
+
+async function handleSignInSubmit(e) {
+    e.preventDefault();
+    const emailInput = document.getElementById("signInEmail");
+    const passwordInput = document.getElementById("signInPassword");
+    const submitBtn = document.getElementById("btnSignInSubmit");
+    const spinner = submitBtn?.querySelector(".btn-spinner");
+    const btnText = submitBtn?.querySelector(".btn-text");
+
+    const email = emailInput?.value.trim();
+    const password = passwordInput?.value;
+
+    if (!email || !password) {
+        showAuthAlert("Please enter both email and password.");
+        return;
+    }
+
+    try {
+        if (submitBtn) submitBtn.disabled = true;
+        if (spinner) spinner.classList.remove("hidden");
+        if (btnText) btnText.textContent = "Signing In...";
+
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || data.message || "Failed to sign in");
+        }
+
+        setAuth(data.access_token, data.user);
+        closeAuthModal();
+        showToast(`Welcome back, ${data.user.name}!`, "success");
+        await loadProjects();
+
+    } catch (err) {
+        showAuthAlert(err.message || "Could not sign in. Please verify your credentials.");
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (spinner) spinner.classList.add("hidden");
+        if (btnText) btnText.textContent = "Sign In";
+    }
+}
+
+async function handleSignUpSubmit(e) {
+    e.preventDefault();
+    const nameInput = document.getElementById("signUpName");
+    const emailInput = document.getElementById("signUpEmail");
+    const passwordInput = document.getElementById("signUpPassword");
+    const submitBtn = document.getElementById("btnSignUpSubmit");
+    const spinner = submitBtn?.querySelector(".btn-spinner");
+    const btnText = submitBtn?.querySelector(".btn-text");
+
+    const name = nameInput?.value.trim();
+    const email = emailInput?.value.trim();
+    const password = passwordInput?.value;
+
+    if (!name || !email || !password) {
+        showAuthAlert("Please fill in all required fields.");
+        return;
+    }
+
+    if (password.length < 6) {
+        showAuthAlert("Password must be at least 6 characters long.");
+        return;
+    }
+
+    try {
+        if (submitBtn) submitBtn.disabled = true;
+        if (spinner) spinner.classList.remove("hidden");
+        if (btnText) btnText.textContent = "Creating Account...";
+
+        const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name, email, password })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || data.message || "Registration failed");
+        }
+
+        setAuth(data.access_token, data.user);
+        closeAuthModal();
+        showToast(`Welcome to CreatCode, ${data.user.name}!`, "success");
+        await loadProjects();
+
+    } catch (err) {
+        showAuthAlert(err.message || "Registration error. Please check your details.");
+    } finally {
+        if (submitBtn) submitBtn.disabled = false;
+        if (spinner) spinner.classList.add("hidden");
+        if (btnText) btnText.textContent = "Create Free Account";
+    }
+}
+
+function handleLogout() {
+    clearAuth();
+    showToast("Signed out successfully.");
+    loadProjects();
+}
+
+function setupAuthEventListeners() {
+    const btnOpenAuthModal = document.getElementById("btnOpenAuthModal");
+    const closeAuthModalBtn = document.getElementById("closeAuthModal");
+    const authModalOverlay = document.getElementById("authModalOverlay");
+    const tabSignIn = document.getElementById("tabSignIn");
+    const tabSignUp = document.getElementById("tabSignUp");
+    const linkToSignUp = document.getElementById("linkToSignUp");
+    const linkToSignIn = document.getElementById("linkToSignIn");
+    const signInForm = document.getElementById("signInForm");
+    const signUpForm = document.getElementById("signUpForm");
+    const avatarBtn = document.getElementById("avatarBtn");
+    const profileDropdown = document.getElementById("profileDropdown");
+    const btnLogout = document.getElementById("btnLogout");
+    const btnDropdownNewProject = document.getElementById("btnDropdownNewProject");
+
+    if (btnOpenAuthModal) {
+        btnOpenAuthModal.addEventListener("click", () => openAuthModal("signin"));
+    }
+
+    if (closeAuthModalBtn) {
+        closeAuthModalBtn.addEventListener("click", closeAuthModal);
+    }
+
+    if (authModalOverlay) {
+        authModalOverlay.addEventListener("click", (e) => {
+            if (e.target === authModalOverlay) {
+                closeAuthModal();
+            }
+        });
+    }
+
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+            closeAuthModal();
+            if (profileDropdown) profileDropdown.classList.add("hidden");
+        }
+    });
+
+    if (tabSignIn) {
+        tabSignIn.addEventListener("click", () => switchAuthTab("signin"));
+    }
+
+    if (tabSignUp) {
+        tabSignUp.addEventListener("click", () => switchAuthTab("signup"));
+    }
+
+    if (linkToSignUp) {
+        linkToSignUp.addEventListener("click", (e) => {
+            e.preventDefault();
+            switchAuthTab("signup");
+        });
+    }
+
+    if (linkToSignIn) {
+        linkToSignIn.addEventListener("click", (e) => {
+            e.preventDefault();
+            switchAuthTab("signin");
+        });
+    }
+
+    if (signInForm) {
+        signInForm.addEventListener("submit", handleSignInSubmit);
+    }
+
+    if (signUpForm) {
+        signUpForm.addEventListener("submit", handleSignUpSubmit);
+    }
+
+    // Password visibility toggle buttons
+    document.querySelectorAll(".btn-toggle-pw").forEach(button => {
+        button.addEventListener("click", () => {
+            const targetId = button.dataset.target;
+            const input = document.getElementById(targetId);
+            if (!input) return;
+
+            const isPassword = input.type === "password";
+            input.type = isPassword ? "text" : "password";
+
+            const icon = button.querySelector("i");
+            if (icon) {
+                icon.setAttribute("data-lucide", isPassword ? "eye-off" : "eye");
+                refreshIcons();
+            }
+        });
+    });
+
+    // Profile dropdown
+    if (avatarBtn && profileDropdown) {
+        avatarBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            profileDropdown.classList.toggle("hidden");
+        });
+
+        document.addEventListener("click", (e) => {
+            if (!profileDropdown.contains(e.target) && e.target !== avatarBtn) {
+                profileDropdown.classList.add("hidden");
+            }
+        });
+    }
+
+    if (btnLogout) {
+        btnLogout.addEventListener("click", handleLogout);
+    }
+
+    if (btnDropdownNewProject) {
+        btnDropdownNewProject.addEventListener("click", () => {
+            if (profileDropdown) profileDropdown.classList.add("hidden");
+            createProject();
+        });
+    }
+}
+
+async function verifyAuthSession() {
+    const token = getAuthToken();
+    if (!token) {
+        updateAuthUI();
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data?.user) {
+                setAuth(token, data.user);
+            }
+        } else {
+            clearAuth();
+        }
+    } catch {
+        // If server is temporarily offline, retain cached session for UI
+        updateAuthUI();
+    }
+}
+
+/* =========================================================
    INITIALIZE
 ========================================================= */
 
@@ -2220,11 +2690,13 @@ async function initializeApp() {
     setupMobileNav();
     setupInspectorTabs();
     setupAccessibility();
+    setupAuthEventListeners();
 
     // Initial editor state
     updateEditorUI();
 
-    // Load projects from MySQL
+    // Verify session then load projects
+    await verifyAuthSession();
     await loadProjects();
 
     refreshIcons();

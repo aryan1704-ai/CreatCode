@@ -26,7 +26,7 @@ MODEL = os.getenv(
 
 client = OpenAI(
     base_url="https://openrouter.ai/api/v1",
-    api_key=API_KEY,
+    api_key=API_KEY or "dummy_key",
     default_headers={
         "HTTP-Referer": "http://127.0.0.1:8000",
         "X-Title": "CreatCode"

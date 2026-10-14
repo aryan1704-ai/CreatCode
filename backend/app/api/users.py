@@ -1,8 +1,10 @@
-from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
+import re
+from fastapi import APIRouter, Depends, HTTPException, status
+from pydantic import BaseModel, Field, field_validator
 from sqlalchemy.orm import Session
+from typing import Optional
 
-from database import SessionLocal
+from auth import get_current_user, get_db, hash_password
 from models import User
 
 
@@ -11,175 +13,99 @@ router = APIRouter(
     tags=["Users"]
 )
 
-
-class UserCreate(BaseModel):
-    name: str
-    email: str
+EMAIL_REGEX = re.compile(r"^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$")
 
 
 class UserUpdate(BaseModel):
-    name: str
-    email: str
+    name: Optional[str] = None
+    email: Optional[str] = None
+    password: Optional[str] = None
+
+    @field_validator("email")
+    @classmethod
+    def check_email(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            cleaned = v.strip().lower()
+            if not EMAIL_REGEX.match(cleaned):
+                raise ValueError("Invalid email format")
+            return cleaned
+        return v
 
 
-@router.post("/")
-def create_user(request: UserCreate):
+@router.get("/me")
+def get_current_user_profile(current_user: User = Depends(get_current_user)):
+    return {
+        "status": "success",
+        "user": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "email": current_user.email,
+            "created_at": current_user.created_at
+        }
+    }
 
-    db: Session = SessionLocal()
 
-    try:
-        existing_user = (
-            db.query(User)
-            .filter(User.email == request.email)
-            .first()
-        )
+@router.put("/me")
+def update_current_user_profile(
+    request: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if request.name:
+        current_user.name = request.name.strip()
 
-        if existing_user:
+    if request.email:
+        normalized_email = request.email.strip().lower()
+        if normalized_email != current_user.email:
+            existing = db.query(User).filter(User.email == normalized_email).first()
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="Email is already in use by another account"
+                )
+            current_user.email = normalized_email
+
+    if request.password:
+        if len(request.password) < 6:
             raise HTTPException(
-                status_code=400,
-                detail="User with this email already exists"
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Password must be at least 6 characters"
             )
+        current_user.password_hash = hash_password(request.password)
 
-        user = User(
-            name=request.name,
-            email=request.email
-        )
+    db.commit()
+    db.refresh(current_user)
 
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-
-        return {
-            "status": "success",
-            "message": "User created successfully",
-            "user_id": user.id,
-            "name": user.name,
-            "email": user.email
+    return {
+        "status": "success",
+        "message": "Profile updated successfully",
+        "user": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "email": current_user.email
         }
-
-    finally:
-        db.close()
-
-
-@router.get("/")
-def get_users():
-
-    db: Session = SessionLocal()
-
-    try:
-        users = db.query(User).all()
-
-        return {
-            "status": "success",
-            "users": [
-                {
-                    "id": user.id,
-                    "name": user.name,
-                    "email": user.email,
-                    "created_at": user.created_at
-                }
-                for user in users
-            ]
-        }
-
-    finally:
-        db.close()
+    }
 
 
 @router.get("/{user_id}")
-def get_user(user_id: int):
-
-    db: Session = SessionLocal()
-
-    try:
-        user = (
-            db.query(User)
-            .filter(User.id == user_id)
-            .first()
-        )
-
-        if not user:
-            raise HTTPException(
-                status_code=404,
-                detail="User not found"
-            )
-
-        return {
-            "status": "success",
-            "user": {
-                "id": user.id,
-                "name": user.name,
-                "email": user.email,
-                "created_at": user.created_at
-            }
-        }
-
-    finally:
-        db.close()
-
-
-@router.put("/{user_id}")
-def update_user(
+def get_user(
     user_id: int,
-    request: UserUpdate
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ):
-
-    db: Session = SessionLocal()
-
-    try:
-        user = (
-            db.query(User)
-            .filter(User.id == user_id)
-            .first()
+    # Only allow retrieving own profile
+    if current_user.id != user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Unauthorized to access this profile"
         )
 
-        if not user:
-            raise HTTPException(
-                status_code=404,
-                detail="User not found"
-            )
-
-        user.name = request.name
-        user.email = request.email
-
-        db.commit()
-        db.refresh(user)
-
-        return {
-            "status": "success",
-            "message": "User updated successfully",
-            "user_id": user.id
+    return {
+        "status": "success",
+        "user": {
+            "id": current_user.id,
+            "name": current_user.name,
+            "email": current_user.email,
+            "created_at": current_user.created_at
         }
-
-    finally:
-        db.close()
-
-
-@router.delete("/{user_id}")
-def delete_user(user_id: int):
-
-    db: Session = SessionLocal()
-
-    try:
-        user = (
-            db.query(User)
-            .filter(User.id == user_id)
-            .first()
-        )
-
-        if not user:
-            raise HTTPException(
-                status_code=404,
-                detail="User not found"
-            )
-
-        db.delete(user)
-        db.commit()
-
-        return {
-            "status": "success",
-            "message": "User deleted successfully"
-        }
-
-    finally:
-        db.close()
+    }

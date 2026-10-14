@@ -55,6 +55,14 @@ Run supported Python code directly through the backend.
 ### 📁 Project Management
 Create and manage coding projects and maintain generated-code history.
 
+### 🔐 Authentication & Authorization
+Secure JWT-based user authentication system featuring:
+- Bcrypt password hashing
+- Fast token issuance with Bearer authentication
+- Scoped personal projects & generation history
+- Anonymous guest mode for open testing
+- Seamless login / signup modal with session persistence
+
 ### 🎨 Developer-Focused Interface
 A dark, modern SaaS-style coding workspace inspired by professional developer tools.
 

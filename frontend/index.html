@@ -75,8 +75,44 @@
 
 
 
-                <div class="avatar">
-                    A
+                <!-- Auth Section -->
+                <div class="auth-wrapper" id="authWrapper">
+                    <button class="btn-auth-signin" id="btnOpenAuthModal" title="Sign In or Create Account">
+                        <i data-lucide="log-in"></i>
+                        <span>Sign In</span>
+                    </button>
+
+                    <div class="user-profile-menu hidden" id="userProfileMenu">
+                        <button class="avatar-button" id="avatarBtn" title="Account Settings" aria-haspopup="true" aria-expanded="false">
+                            <span class="avatar-initial" id="avatarInitial">U</span>
+                            <span class="avatar-status-dot"></span>
+                        </button>
+
+                        <div class="profile-dropdown hidden" id="profileDropdown">
+                            <div class="dropdown-header">
+                                <div class="dropdown-avatar" id="dropdownAvatar">U</div>
+                                <div class="dropdown-user-info">
+                                    <span class="dropdown-name" id="dropdownUserName">User Name</span>
+                                    <span class="dropdown-email" id="dropdownUserEmail">user@example.com</span>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-badge-row">
+                                <span class="badge-role"><i data-lucide="shield-check"></i> Authorized</span>
+                                <span class="badge-status">Active Session</span>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item" id="btnDropdownNewProject">
+                                <i data-lucide="folder-plus"></i>
+                                <span>New Project</span>
+                            </button>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item logout" id="btnLogout">
+                                <i data-lucide="log-out"></i>
+                                <span>Sign Out</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -634,6 +670,105 @@
 
     </div>
 
+
+    <!-- =====================================================
+         AUTHENTICATION MODAL
+    ====================================================== -->
+    <div class="auth-modal-overlay hidden" id="authModalOverlay" role="dialog" aria-modal="true" aria-labelledby="authModalTitle">
+        <div class="auth-modal-card">
+            <button class="auth-close-btn" id="closeAuthModal" aria-label="Close modal">
+                <i data-lucide="x"></i>
+            </button>
+
+            <div class="auth-header">
+                <div class="auth-brand-badge">
+                    <i data-lucide="shield-check"></i>
+                </div>
+                <h2 class="auth-title" id="authModalTitle">Welcome to CreatCode</h2>
+                <p class="auth-subtitle" id="authModalSubtitle">Sign in to sync your personal projects & code history</p>
+            </div>
+
+            <div class="auth-tabs" role="tablist">
+                <button class="auth-tab active" id="tabSignIn" role="tab" aria-selected="true">Sign In</button>
+                <button class="auth-tab" id="tabSignUp" role="tab" aria-selected="false">Create Account</button>
+            </div>
+
+            <div class="auth-alert hidden" id="authAlert">
+                <i data-lucide="alert-circle" id="authAlertIcon"></i>
+                <span id="authAlertMessage"></span>
+            </div>
+
+            <!-- Sign In Form -->
+            <form class="auth-form" id="signInForm">
+                <div class="auth-field">
+                    <label for="signInEmail">Email Address</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="mail"></i>
+                        <input type="email" id="signInEmail" placeholder="developer@creatcode.ai" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label for="signInPassword">Password</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="signInPassword" placeholder="••••••••" required autocomplete="current-password">
+                        <button type="button" class="btn-toggle-pw" tabindex="-1" data-target="signInPassword" aria-label="Toggle password visibility">
+                            <i data-lucide="eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-submit-btn" id="btnSignInSubmit">
+                    <span class="btn-text">Sign In</span>
+                    <span class="btn-spinner hidden"></span>
+                </button>
+
+                <p class="auth-switch-text">
+                    Don't have an account? <a href="#" id="linkToSignUp">Create one now</a>
+                </p>
+            </form>
+
+            <!-- Sign Up Form -->
+            <form class="auth-form hidden" id="signUpForm">
+                <div class="auth-field">
+                    <label for="signUpName">Full Name</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="user"></i>
+                        <input type="text" id="signUpName" placeholder="e.g. Alex Morgan" required autocomplete="name" minlength="2">
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label for="signUpEmail">Email Address</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="mail"></i>
+                        <input type="email" id="signUpEmail" placeholder="developer@creatcode.ai" required autocomplete="email">
+                    </div>
+                </div>
+
+                <div class="auth-field">
+                    <label for="signUpPassword">Password</label>
+                    <div class="input-with-icon">
+                        <i data-lucide="lock"></i>
+                        <input type="password" id="signUpPassword" placeholder="Minimum 6 characters" required autocomplete="new-password" minlength="6">
+                        <button type="button" class="btn-toggle-pw" tabindex="-1" data-target="signUpPassword" aria-label="Toggle password visibility">
+                            <i data-lucide="eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <button type="submit" class="auth-submit-btn" id="btnSignUpSubmit">
+                    <span class="btn-text">Create Free Account</span>
+                    <span class="btn-spinner hidden"></span>
+                </button>
+
+                <p class="auth-switch-text">
+                    Already have an account? <a href="#" id="linkToSignIn">Sign in</a>
+                </p>
+            </form>
+        </div>
+    </div>
 
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
